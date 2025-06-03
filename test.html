@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>WebSocket 테스트</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #1b1b1b;
+        color: #eee;
+        padding: 2em;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      button {
+        margin-right: 8px;
+        margin-bottom: 8px;
+        padding: 0.5em 1.2em;
+      }
+      input {
+        background: #222;
+        color: #eee;
+        border: 1px solid #444;
+        padding: 0.5em;
+        border-radius: 5px;
+      }
+      pre {
+        background: #222;
+        padding: 1em;
+        border-radius: 8px;
+        max-height: 350px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>WebSocket 상태: <span id="status">연결 안 됨</span></h2>
+    <div>
+      <button onclick="sendCmd('detect_face')">detect_face</button>
+      <button onclick="sendCmd('detect_arm')">detect_arm</button>
+      <button onclick="sendCmd('detect_voice')">detect_voice</button>
+      <button onclick="sendCmd('exit')">exit</button>
+      <input id="customCmd" placeholder="명령 직접 입력" />
+      <button onclick="sendCustom()">보내기</button>
+    </div>
+    <pre id="log"></pre>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const logEl = document.getElementById("log");
+      let ws = null;
+
+      function log(msg) {
+        logEl.textContent += msg + "\n";
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function connect() {
+        ws = new WebSocket("ws://localhost:3000/ws");
+        ws.onopen = () => {
+          statusEl.textContent = "연결됨 ✅";
+          log("✅ 연결 성공");
+        };
+        ws.onmessage = (event) => {
+          log("📨 받은 메시지: " + event.data);
+        };
+        ws.onerror = (error) => {
+          log("❌ 오류 발생: " + error);
+        };
+        ws.onclose = () => {
+          statusEl.textContent = "연결 종료됨 ❌";
+          log("🔌 연결 종료됨");
+        };
+      }
+
+      function sendCmd(cmd) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(cmd);
+          log(`📤 명령 전송: ${cmd}`);
+        } else {
+          log("❗ WebSocket이 열려있지 않습니다.");
+        }
+      }
+      function sendCustom() {
+        const val = document.getElementById("customCmd").value.trim();
+        if (val) sendCmd(val);
+      }
+
+      // 최초 자동 연결
+      connect();
+    </script>
+  </body>
+</html>
