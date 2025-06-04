@@ -56,4 +56,3 @@ def predict_face_asymmetry(rgb_frame):
             "rate": round(percent, 4),
             "Result": "abnormal" if pred == 1 else "normal"
         }
-
