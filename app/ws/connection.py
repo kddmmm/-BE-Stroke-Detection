@@ -45,7 +45,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     await asyncio.sleep(0.1)
                     continue
                 res = predict_face_asymmetry(frame)
-                # 유효한 경우만 카운팅
                 if res["Result"] in ["failed to detect face", "no front face"]:
                     await asyncio.sleep(0.1)
                     continue
@@ -60,17 +59,15 @@ async def websocket_endpoint(websocket: WebSocket):
                 }))
                 continue
 
-            avg_result = sum(valid_results) / len(valid_results)
-            avg_rate = sum(valid_rates) / len(valid_rates)
-            final_face_result = "abnormal" if avg_result >= 0.5 else "normal"
+            normal_ratio = sum(valid_results) / len(valid_results)
+            final_face_result = "abnormal" if normal_ratio >= 0.5 else "normal"
 
             await websocket.send_text(json.dumps({
                 "type": "face-final",
                 "value": final_face_result,
-                "rate": round(avg_rate, 4)
+                "rate": round(normal_ratio, 4)
             }))
 
-            # 아래는 기존 arm, voice, final 파트 (이전과 동일)
             if final_face_result == "normal":
                 continue
             elif final_face_result == "abnormal":
@@ -88,7 +85,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "value": voice_result_obj["value"],
                     "rate": voice_result_obj["rate"]
                 }))
-                final_value = 0.5 * arm_result_obj["rate"] + 0.3 * avg_rate + 0.2 * voice_result_obj["rate"]
+                final_value = 0.5 * arm_result_obj["rate"] + 0.3 * normal_ratio + 0.2 * voice_result_obj["rate"]
                 if final_value < 0.5:
                     await websocket.send_text(json.dumps({
                         "type": "final",
@@ -102,7 +99,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "rate": final_value
                     }))
                 write_result(
-                    {"Result": final_face_result, "rate": round(avg_rate, 4)},
+                    {"Result": final_face_result, "rate": round(normal_ratio, 4)},
                     arm_result_obj,
                     voice_result_obj,
                     final_value
