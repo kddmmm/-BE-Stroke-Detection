@@ -22,6 +22,17 @@ def detect_arm():
     max_frames = 50
     interval = 0.1 
 
+    rgb = WebcamManager.instance().get_rgb_frame()
+    pose_result = pose.process(rgb)
+    hands_result = hands.process(rgb)
+
+    if hands_result is None:
+        return {
+            "name": "error",
+            "rate": 0.0,
+            "result": "no arm frame"
+        }
+    
     while frame_count < max_frames:
         rgb = WebcamManager.instance().get_rgb_frame()
         if rgb is None:
@@ -70,7 +81,7 @@ def detect_arm():
     rate = (normal_count / total) if total > 0 else 0
 
     return {
-    "result": "normal" if rate <= 0.8 else "abnormal",
-    "rate": round(rate, 4)
+        "result": "normal" if rate >= 0.8 else "abnormal",
+        "rate": round(rate, 4)
     }  
 

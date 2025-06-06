@@ -22,7 +22,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if rgb_frame is None:
                 await websocket.send_text(json.dumps({
                     "type": "error",
-                    "message": "프레임 읽기 실패 또는 카메라 미사용"
+                    "message": "no rgb frame"
                 }))
                 continue
 
@@ -55,7 +55,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if not valid_results:
                 await websocket.send_text(json.dumps({
                     "type": "error",
-                    "message": "30프레임 동안 유효한 얼굴을 감지하지 못했습니다."
+                    "message": "failed to detect face in 30 frames"
                 }))
                 continue
 
@@ -72,13 +72,24 @@ async def websocket_endpoint(websocket: WebSocket):
                 continue
             elif final_face_result == "abnormal":
                 await asyncio.sleep(5)
-                arm_result_obj = detect_arm()
-                await websocket.send_text(json.dumps({
-                    "type": "arm",
-                    "value": arm_result_obj["result"],
-                    "rate": arm_result_obj["rate"]
-                }))
+                # 팔 감지
+                while True:
+                    arm_result_obj = detect_arm()
+                    if arm_result_obj["result"] == "no arm frame":
+                        await websocket.send_text(json.dumps({
+                            "type": "error",
+                            "message": "failed to detect arm"
+                        }))
+                        continue
+                    else:
+                        await websocket.send_text(json.dumps({
+                            "type": "arm",
+                            "value": arm_result_obj["result"],
+                            "rate": arm_result_obj["rate"]
+                        }))
+                        break
                 await asyncio.sleep(5)
+                # 음성 감지
                 voice_result_obj = detect_voice()
                 await websocket.send_text(json.dumps({
                     "type": "voice",
