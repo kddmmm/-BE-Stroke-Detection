@@ -16,23 +16,32 @@ mp_hands = mp.solutions.hands
 pose = mp_pose.Pose()
 hands = mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5)
 
+def precheck_hand():
+    for _ in range(10):  # 1초간 10프레임(0.1s마다)
+        rgb = WebcamManager.instance().get_rgb_frame()
+        if rgb is None:
+            time.sleep(0.1)
+            continue
+        hands_result = hands.process(rgb)
+        if hands_result and hands_result.multi_hand_landmarks:
+            return True
+        time.sleep(0.1)
+    return False
+
 def detect_arm():
-    results = []
-    frame_count = 0
-    max_frames = 50
-    interval = 0.1 
-
-    rgb = WebcamManager.instance().get_rgb_frame()
-    pose_result = pose.process(rgb)
-    hands_result = hands.process(rgb)
-
-    if hands_result is None:
+    # 1초간 손 감지 전처리
+    if not precheck_hand():
         return {
             "name": "error",
             "rate": 0.0,
-            "result": "no arm frame"
+            "result": "no hand detected"
         }
-    
+
+    results = []
+    frame_count = 0
+    max_frames = 50
+    interval = 0.1
+
     while frame_count < max_frames:
         rgb = WebcamManager.instance().get_rgb_frame()
         if rgb is None:
@@ -83,5 +92,4 @@ def detect_arm():
     return {
         "result": "normal" if rate >= 0.8 else "abnormal",
         "rate": round(rate, 4)
-    }  
-
+    }

@@ -36,6 +36,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if face_result_obj["Result"] in ["failed to detect face", "no front face"]:
                 continue
 
+            # 30프레임 얼굴 비대칭 평균 분석
             frame_count = 30
             valid_results = []
             valid_rates = []
@@ -68,18 +69,21 @@ async def websocket_endpoint(websocket: WebSocket):
                 "rate": round(normal_ratio, 4)
             }))
 
+            # 정상일 경우 루프 계속(=계속 얼굴만 분석)
             if final_face_result == "normal":
                 continue
+
             elif final_face_result == "abnormal":
-                await asyncio.sleep(5)
-                # 팔 감지
+                await asyncio.sleep(2)
+                # 팔 감지 (detect_arm에서 1초간 손 사전 체크)
                 while True:
                     arm_result_obj = detect_arm()
-                    if arm_result_obj["result"] == "no arm frame":
+                    if arm_result_obj["result"] == "no hand detected":
                         await websocket.send_text(json.dumps({
                             "type": "error",
-                            "message": "failed to detect arm"
+                            "message": "no hand detected"
                         }))
+                        await asyncio.sleep(1)
                         continue
                     else:
                         await websocket.send_text(json.dumps({
@@ -88,7 +92,8 @@ async def websocket_endpoint(websocket: WebSocket):
                             "rate": arm_result_obj["rate"]
                         }))
                         break
-                await asyncio.sleep(5)
+
+                await asyncio.sleep(2)
                 # 음성 감지
                 voice_result_obj = detect_voice()
                 await websocket.send_text(json.dumps({
