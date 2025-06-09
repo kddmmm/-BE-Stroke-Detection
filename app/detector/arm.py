@@ -87,9 +87,9 @@ def detect_arm():
     count = Counter(results)
     normal_count = count[0]
     total = len(results)
-    rate = (normal_count / total) if total > 0 else 0
+    rate = 1 - (normal_count / total) if total > 0 else 0
 
     return {
-        "result": "normal" if rate >= 0.8 else "abnormal",
+        "result": "normal" if rate <= 0.8 else "abnormal",
         "rate": round(rate, 4)
     }
