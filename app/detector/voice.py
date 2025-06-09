@@ -20,8 +20,8 @@ class SpeechDisorderDetector(nn.Module):
         x = self.fc3(x)
         return x
 
-MODEL_PATH = "app/models/voice/my_model.pt"
-SCALER_PATH = "app/models/voice/my_scaler.pkl"
+MODEL_PATH = "app/models/voice/voice_model.pt"
+SCALER_PATH = "app/models/voice/voice_scaler.pkl"
 
 def load_model_and_scaler():
 
