@@ -102,25 +102,29 @@ async def websocket_endpoint(websocket: WebSocket):
                     "rate": voice_result_obj["rate"]
                 }))
                 final_value = 0.5 * arm_result_obj["rate"] + 0.3 * normal_ratio + 0.2 * voice_result_obj["rate"]
+                await asyncio.sleep(2)
                 if final_value < 0.5:
                     await websocket.send_text(json.dumps({
                         "type": "final",
                         "value": "normal",
                         "rate": final_value
                     }))
+                    print("[WebSocket] 정상 상태로 판단됨")
                 else:
                     await websocket.send_text(json.dumps({
                         "type": "final",
                         "value": "abnormal",
                         "rate": final_value
                     }))
+                    print("[WebSocket] 비정상 상태로 판단됨")
                 write_result(
                     {"Result": final_face_result, "rate": round(normal_ratio, 4)},
                     arm_result_obj,
                     voice_result_obj,
                     final_value
                 )
-                await asyncio.sleep(10)
+                await asyncio.sleep(200)
+                continue
 
     except Exception as e:
         print(f"[WebSocket 오류] {e}")
